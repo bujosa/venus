@@ -3,14 +3,13 @@ package main
 import (
 	"net/http"
 
+	controllers "github.com/Venus-Golang/controllers"
 	"github.com/julienschmidt/httprouter"
-	"github.com/undestanding-mongodb/controllers"
-	mongo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2"
 )
 
 func main() {
 	r := httprouter.New()
-	// Get a UserController instance
 	uc := controllers.NewUserController(getSession())
 	r.GET("/user/:id", uc.GetUser)
 	r.POST("/user", uc.CreateUser)
@@ -18,11 +17,9 @@ func main() {
 	http.ListenAndServe("localhost:8080", r)
 }
 
-func getSession() *mongo.Session {
-	// Connect to our local mongo
-	s, err := mongo.Dial("mongodb://localhost")
+func getSession() *mgo.Session {
+	s, err := mgo.Dial("mongodb://localhost:27017")
 
-	// Check if connection error, is mongo running?
 	if err != nil {
 		panic(err)
 	}

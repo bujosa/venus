@@ -5,33 +5,42 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Venus-Golang/models"
 	"github.com/julienschmidt/httprouter"
-	"github.com/undestanding-mongodb/models"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
-// added session to our userController
 type UserController struct {
 	session *mgo.Session
 }
 
-// added session to our userController
 func NewUserController(s *mgo.Session) *UserController {
 	return &UserController{s}
 }
 
 func (uc UserController) GetUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	u := models.User{
-		Name:   "James Bond",
-		Gender: "male",
-		Age:    32,
-		Id:     p.ByName("id"),
+	id := p.ByName("id")
+
+	if !bson.IsObjectIdHex(id) {
+		w.WriteHeader(http.StatusNotFound) // 404
+		return
+	}
+
+	oid := bson.ObjectIdHex(id)
+
+	u := models.User{}
+
+	if err := uc.session.DB("go-web-dev-db").C("users").FindId(oid).One(&u); err != nil {
+		w.WriteHeader(404)
+		return
 	}
 
 	uj, err := json.Marshal(u)
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK) // 200
 	fmt.Fprintf(w, "%s\n", uj)
@@ -42,7 +51,9 @@ func (uc UserController) CreateUser(w http.ResponseWriter, r *http.Request, _ ht
 
 	json.NewDecoder(r.Body).Decode(&u)
 
-	u.Id = "007"
+	u.Id = bson.NewObjectId()
+
+	uc.session.DB("go-web-dev-db").C("users").Insert(u)
 
 	uj, err := json.Marshal(u)
 	if err != nil {
@@ -55,7 +66,21 @@ func (uc UserController) CreateUser(w http.ResponseWriter, r *http.Request, _ ht
 }
 
 func (uc UserController) DeleteUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	// TODO: only write code to delete user
+	id := p.ByName("id")
+
+	if !bson.IsObjectIdHex(id) {
+		w.WriteHeader(404)
+		return
+	}
+
+	oid := bson.ObjectIdHex(id)
+
+	// Delete user
+	if err := uc.session.DB("go-web-dev-db").C("users").RemoveId(oid); err != nil {
+		w.WriteHeader(404)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK) // 200
-	fmt.Fprint(w, "Write code to delete user\n")
+	fmt.Fprint(w, "Deleted user", oid, "\n")
 }
