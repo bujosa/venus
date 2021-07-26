@@ -3,16 +3,19 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/GoesToEleven/golang-web-dev/042_mongodb/05_mongodb/02_update-user-model/models"
-	"github.com/julienschmidt/httprouter"
-	"gopkg.in/mgo.v2"
 	"net/http"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/undestanding-mongodb/models"
+	"gopkg.in/mgo.v2"
 )
 
+// added session to our userController
 type UserController struct {
 	session *mgo.Session
 }
 
+// added session to our userController
 func NewUserController(s *mgo.Session) *UserController {
 	return &UserController{s}
 }
@@ -29,7 +32,6 @@ func (uc UserController) GetUser(w http.ResponseWriter, r *http.Request, p httpr
 	if err != nil {
 		fmt.Println(err)
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK) // 200
 	fmt.Fprintf(w, "%s\n", uj)
