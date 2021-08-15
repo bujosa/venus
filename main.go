@@ -10,7 +10,7 @@ import (
 
 func main() {
 	r := httprouter.New()
-	
+
 	uc := controllers.NewUserController(getSession())
 
 	r.GET("/user/:id", uc.GetUser)
@@ -28,5 +28,6 @@ func getSession() *mgo.Session {
 	if err != nil {
 		panic(err)
 	}
+	
 	return s
 }
